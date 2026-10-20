@@ -14,7 +14,7 @@ segunda busca é instantânea e dá pra usar sem internet depois.
 Precisa de Python 3.10 ou mais novo.
 
 ```bash
-git clone https://github.com/<seu-usuario>/pokedex-cli.git
+git clone https://github.com/guipmartins/pokedex-cli.git
 cd pokedex-cli
 python -m venv .venv
 .venv\Scripts\activate        # no Linux/macOS: source .venv/bin/activate
