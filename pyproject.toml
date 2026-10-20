@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pokedex-cli"
+version = "1.0.0"
+description = "Uma Pokédex de terminal com sprites coloridos, comparação de stats, análise de time e quiz \"Quem é esse Pokémon?\"."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Guilherme" }]
+requires-python = ">=3.10"
+keywords = ["pokemon", "pokedex", "cli", "terminal", "pokeapi", "rich"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Environment :: Console",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "httpx>=0.27",
+    "pillow>=10.0",
+    "rich>=13.7",
+    "typer>=0.12",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.5"]
+
+[project.scripts]
+pokedex = "pokedex.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pokedex"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
