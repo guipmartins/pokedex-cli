@@ -11,3 +11,6 @@ venv/
 htmlcov/
 .vscode/
 .idea/
+
+# chaves de API: nunca suba isto pro GitHub
+.env

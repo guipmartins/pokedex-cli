@@ -44,7 +44,14 @@ def make_pokemon(
         "sprites": {
             "front_default": f"https://sprites.test/{pid}.png",
             "front_shiny": f"https://sprites.test/shiny/{pid}.png",
+            "other": {
+                "official-artwork": {
+                    "front_default": f"https://sprites.test/art/{pid}.png",
+                    "front_shiny": f"https://sprites.test/art/shiny/{pid}.png",
+                }
+            },
         },
+        "cries": {"latest": f"https://sprites.test/cries/{pid}.ogg"},
         "species": {"url": f"{BASE_URL}/pokemon-species/{species}/"},
     }
 
@@ -71,9 +78,16 @@ def make_species(name: str, chain_id: int, gen: int = 1, legendary: bool = False
     }
 
 
+SPECIES_IDS = {
+    "pichu": 172, "pikachu": 25, "raichu": 26, "charmander": 4, "charmeleon": 5,
+    "charizard": 6, "squirtle": 7, "gastly": 92, "haunter": 93, "gengar": 94,
+    "eevee": 133, "vaporeon": 134, "jolteon": 135, "espeon": 196, "mr-mime": 122,
+}  # fmt: skip
+
+
 def node(name: str, children: list[dict] | None = None, **details) -> dict:
     return {
-        "species": {"name": name},
+        "species": {"name": name, "url": f"{BASE_URL}/pokemon-species/{SPECIES_IDS[name]}/"},
         "evolution_details": [details] if details else [],
         "evolves_to": children or [],
     }
@@ -224,3 +238,33 @@ def cli_api(monkeypatch, tmp_path, server):
 
     monkeypatch.setattr(cli, "make_api", factory)
     return server
+
+
+class FakeAIServer:
+    """Responde como a API da Anthropic ou da OpenAI, guardando o que recebeu."""
+
+    def __init__(self) -> None:
+        self.requests: list[dict] = []
+        self.reply = "Pikachu, o Pokémon Rato. Guarda eletricidade nas bochechas."
+        self.status = 200
+
+    def __call__(self, request: httpx.Request) -> httpx.Response:
+        import json
+
+        body = json.loads(request.content)
+        self.requests.append({"url": str(request.url), "headers": request.headers, "body": body})
+        if self.status != 200:
+            return httpx.Response(self.status, json={"error": "x"})
+        if request.url.host == "api.anthropic.com":
+            return httpx.Response(200, json={"content": [{"type": "text", "text": self.reply}]})
+        return httpx.Response(200, json={"choices": [{"message": {"content": self.reply}}]})
+
+
+@pytest.fixture
+def ai_server() -> FakeAIServer:
+    return FakeAIServer()
+
+
+@pytest.fixture
+def ai_client(ai_server) -> httpx.Client:
+    return httpx.Client(transport=httpx.MockTransport(ai_server))

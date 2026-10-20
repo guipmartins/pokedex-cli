@@ -64,6 +64,9 @@ class Pokemon:
     sprite_url: str | None = None
     shiny_sprite_url: str | None = None
     species_url: str | None = None
+    artwork_url: str | None = None  # arte oficial em alta resolução (475x475)
+    shiny_artwork_url: str | None = None
+    cry_url: str | None = None  # grito do Pokémon em .ogg
 
     @property
     def display_name(self) -> str:
@@ -91,7 +94,24 @@ class Pokemon:
             sprite_url=sprites.get("front_default") or artwork.get("front_default"),
             shiny_sprite_url=sprites.get("front_shiny") or artwork.get("front_shiny"),
             species_url=(data.get("species") or {}).get("url"),
+            artwork_url=artwork.get("front_default") or artwork_url(data["id"]),
+            shiny_artwork_url=artwork.get("front_shiny") or artwork_url(data["id"], shiny=True),
+            cry_url=(data.get("cries") or {}).get("latest"),
         )
+
+
+SPRITES_BASE = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon"
+
+
+def artwork_url(pokemon_id: int, shiny: bool = False) -> str:
+    """URL da arte oficial em HD hospedada no repositório de sprites da PokeAPI."""
+    folder = "official-artwork/shiny" if shiny else "official-artwork"
+    return f"{SPRITES_BASE}/other/{folder}/{pokemon_id}.png"
+
+
+def id_from_url(url: str | None) -> int | None:
+    match = re.search(r"/(\d+)/?$", url or "")
+    return int(match.group(1)) if match else None
 
 
 @dataclass
@@ -131,6 +151,7 @@ class EvolutionNode:
     name: str
     condition: str | None = None
     evolves_to: list[EvolutionNode] = field(default_factory=list)
+    species_id: int | None = None
 
     @property
     def display_name(self) -> str:
@@ -145,12 +166,23 @@ class EvolutionNode:
             name=node["species"]["name"],
             condition=describe_evolution(details[0]) if details else None,
             evolves_to=[cls.from_api(child) for child in node.get("evolves_to", [])],
+            species_id=id_from_url(node["species"].get("url")),
         )
 
     def walk(self):
         yield self
         for child in self.evolves_to:
             yield from child.walk()
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "display_name": self.display_name,
+            "id": self.species_id,
+            "artwork": artwork_url(self.species_id) if self.species_id else None,
+            "condition": self.condition,
+            "evolves_to": [child.to_dict() for child in self.evolves_to],
+        }
 
 
 _TIME_PT = {"day": "de dia", "night": "à noite", "dusk": "ao entardecer"}

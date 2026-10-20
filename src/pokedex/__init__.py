@@ -1,3 +1,3 @@
-"""Pokédex de terminal construída sobre a PokeAPI."""
+"""Pokédex construída sobre a PokeAPI: versão web com IA e versão de terminal."""
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"

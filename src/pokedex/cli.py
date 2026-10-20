@@ -291,6 +291,49 @@ def types_cmd(
     )
 
 
+@app.command()
+def web(
+    port: Annotated[int, typer.Option("--port", "-p", help="Porta do servidor.")] = 8000,
+    host: Annotated[str, typer.Option("--host", help="Endereço (0.0.0.0 libera na rede).")] = (
+        "127.0.0.1"
+    ),
+    no_browser: Annotated[
+        bool, typer.Option("--no-browser", help="Não abre o navegador sozinho.")
+    ] = False,
+) -> None:
+    """Abre a Pokédex no navegador, com arte em HD e IA."""
+    import threading
+    import webbrowser
+
+    import uvicorn
+
+    from pokedex.ai import PokedexAI, load_dotenv, provider_from_env
+    from pokedex.web.server import create_app
+
+    load_dotenv()
+    provider = provider_from_env()
+    ai = PokedexAI(provider) if provider else None
+    url = f"http://{'localhost' if host in ('127.0.0.1', '0.0.0.0') else host}:{port}"
+
+    console.print(
+        Panel.fit(
+            f"[bold]Pokédex rodando em[/] [link={url}]{url}[/link]\n"
+            + (
+                f"[green]IA ligada:[/] {ai.label}"
+                if ai
+                else "[yellow]IA desligada[/] [dim](coloque a chave no arquivo .env)[/]"
+            )
+            + "\n[dim]Ctrl+C para parar[/]",
+            border_style="#E8A33D",
+        )
+    )
+    if not no_browser:
+        threading.Timer(1.2, webbrowser.open, args=(url,)).start()
+    uvicorn.run(
+        create_app(PokeAPI(offline=state["offline"]), ai), host=host, port=port, log_level="warning"
+    )
+
+
 @cache_app.command("info")
 def cache_info() -> None:
     """Mostra onde fica o cache e quanto espaço ocupa."""
