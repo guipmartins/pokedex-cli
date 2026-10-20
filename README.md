@@ -7,7 +7,7 @@ resolução e uma IA que conversa sobre o Pokémon na tela.
 Os dados vêm da [PokeAPI](https://pokeapi.co). Tudo que é consultado fica salvo em cache, então a
 segunda busca é instantânea e dá pra usar sem internet depois.
 
-<!-- print da versão web: ![Pokédex no navegador](docs/web.png) -->
+![Pokédex no navegador](docs/web.png)
 
 ## Rodando
 
